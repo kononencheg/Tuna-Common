@@ -1,200 +1,213 @@
-(function() {
 
-    var Request = function(url) {
-        tuna.events.EventDispatcher.call(this);
 
-        /**
-         * Адрес запроса.
-         *
-         * @type String
-         */
-        this.__url = url;
 
-        /**
-         * Флаг о синхронности запроса
-         *
-         * @type Boolean
-         */
-        this.isSync = false;
-
-        /**
-         * Метод запроса.
-         *
-         * По-умолчанию GET.
-         *
-         * @type Boolean
-         */
-        this.method = 'GET';
-
-        /**
-         * Заголовки запроса
-         *
-         * @type Array.<{ name: '', value: '' }>
-         */
-        this.headers = [];
-
-        /**
-         * Данные запроса
-         *
-         * TODO: Implement setData method!
-         *
-         * @type Object
-         */
-        this.__data = null;
-
-        /**
-         * Строка результата запроса
-         *
-         * @type String
-         */
-        this.__response = {};
-
-        this.__request = null;
-    };
-
-    tuna.utils.implement(Request, tuna.net.IRequest);
-    tuna.utils.extend(Request, tuna.events.EventDispatcher);
-
-    Request.prototype.setData = function(data) {
-        this.__data = data;
-    };
-
-    Request.prototype.setURL = function(url) {
-        this.__url = url;
-    };
+/**
+ * Класс отправки XHR-запроса реализующий интерфейс
+ * <code>tuna.net.IRequest</code>.
+ *
+ * @constructor
+ * @implements {tuna.net.IRequest}
+ * @extends {tuna.events.EventDispatcher}
+ * @param {string=} opt_url URL-адрес к которому сделует сделать запрос.
+ * @param {boolean=} opt_isSync Флаг синхронности запроса.
+ */
+tuna.net.Request = function(opt_url, opt_isSync) {
+    tuna.events.EventDispatcher.call(this);
 
     /**
-     * Обработка состояния запроса.
-     *
      * @private
+     * @type {string}
      */
-    Request.prototype.__requestStateHandler = function(request) {
-        if (request.readyState === 4) {
-            this.__response = request.responseText;
-
-            this.dispatch('complete', this.__response);
-
-            request.abort();
-        }
-    };
+    this.__url = opt_url || '/';
 
     /**
-     * Функци отправки запроса.
+     * @private
+     * @type {boolean}
      */
-    Request.prototype.send = function() {
-        var requestURL = this.__url;
+    this.__isSync = !!opt_isSync;
 
-        if (this.__request !== null) {
-            this.__request.abort();
-        }
+    /**
+     * @private
+     * @type {string}
+     */
+    this.__method = tuna.net.Request.METHOD_GET;
 
-        //Инициализируем запрос.
-        var request = !tuna.utils.IS_IE ?
-                        new XMLHttpRequest() :
-                        new ActiveXObject('Microsoft.XMLHTTP');
+    /**
+     * @private
+     * @type {Object.<string, string>}
+     */
+    this.__headers = {};
 
-        if (!this.isSync) {
-            var self = this;
+    /**
+     * @private
+     * @type {Object}
+     */
+    this.__data = null;
 
-            request.onreadystatechange = function() {
-                self.__requestStateHandler(request);
+    /**
+     * @private
+     * @type {Array.<XMLHttpRequest>}
+     */
+    this.__requests = [];
+};
+
+
+tuna.utils.extend(tuna.net.Request, tuna.events.EventDispatcher);
+
+
+/**
+ * Константа имени GET запроса
+ *
+ * @const
+ * @type {string}
+ */
+tuna.net.Request.METHOD_GET = 'GET';
+
+
+/**
+ * Константа имени POST запроса
+ *
+ * @const
+ * @type {string}
+ */
+tuna.net.Request.METHOD_POST = 'POST';
+
+
+/**
+ * Установка URL-адреса запроса.
+ *
+ * @param {string} url URL-адрес запроса.
+ */
+tuna.net.Request.prototype.setURL = function(url) {
+    this.__url = url;
+};
+
+
+/**
+ * Установка данных запроса.
+ *
+ * @param {Object} data Данные запроса.
+ */
+tuna.net.Request.prototype.setData = function(data) {
+    this.__data = data;
+};
+
+
+/**
+ * Установка HTTP-метода запроса. Например,
+ * <code>tuna.net.Request.METHOD_GET</code> или
+ * <code>tuna.net.Request.METHOD_POST</code>.
+ *
+ * В зависимости от типа запроса сопутствующие данные будет добавлены к
+ * URL-адресу запроса (GET), либо к телу запроса (не GET).
+ *
+ * @param {string} method Метод запроса.
+ */
+tuna.net.Request.prototype.setMethod = function(method) {
+    this.__method = method;
+};
+
+
+/**
+ * Добавление HTTP-заголовка запроса.
+ *
+ * @param {string} name Название заголовка.
+ * @param {string} value Значание заголовка.
+ */
+tuna.net.Request.prototype.addHeader = function(name, value) {
+    this.__headers[name] = value;
+};
+
+
+/**
+ * Удаление HTTP-заголовка запроса.
+ *
+ * @param {string} name Название заголовка.
+ */
+tuna.net.Request.prototype.removeHeader = function(name) {
+    delete this.__headers[name];
+};
+
+
+/**
+ * @inheritDoc
+ */
+tuna.net.Request.prototype.send = function(opt_data) {
+    if (opt_data !== undefined) {
+        this.__data = opt_data;
+    }
+
+    var request = !tuna.IS_IE ? new XMLHttpRequest() :
+        new ActiveXObject('Microsoft.XMLHTTP');
+    if (!this.__isSync) {
+        var self = this;
+
+        request.onreadystatechange = function() {
+            if (request.readyState === 4) {
+                self.dispatch('complete', request.responseText);
+
+                self.__removeRequest(request);
+                request.abort();
             }
         }
+    }
 
-        var dataString = Request.encode(this.__data);
+    for (var name in this.__headers) {
+        request.setRequestHeader(name, this.__headers[name]);
+    }
 
-        if (this.method === 'GET' && dataString !== '') {
-            requestURL += (requestURL.indexOf('?') === -1 ? '?' : '&') + dataString;
+    var requestURL = this.__url;
+    var dataString = tuna.utils.urlEncode(this.__data);
+
+    if (this.__method === tuna.net.Request.METHOD_GET &&
+        dataString.length !== 0) {
+        requestURL += (requestURL.indexOf('?') === -1 ? '?' : '&') + dataString;
+    }
+
+    request.open(this.__method, encodeURI(requestURL), !this.__isSync);
+
+    var sendData = null;
+    if (this.__method !== tuna.net.Request.METHOD_GET) {
+        request.setRequestHeader(
+            'Content-Type', 'application/x-www-form-urlencoded'
+        );
+
+        sendData = dataString;
+    }
+
+    request.send(sendData);
+
+    if (this.__isSync) {
+        this.dispatch('complete', request.responseText);
+    } else {
+        this.__requests.push(request);
+    }
+};
+
+
+/**
+ * @inheritDoc
+ */
+tuna.net.Request.prototype.abort = function() {
+    while (this.__requests.length > 0) {
+        this.__requests.shift().abort();
+    }
+};
+
+
+/**
+ * @param {XMLHttpRequest} request Объект XHR запроса.
+ * @private
+ */
+tuna.net.Request.prototype.__removeRequest = function(request) {
+    var i = 0,
+        l = this.__requests.length;
+
+    while (i < l) {
+        if (this.__requests[i] === request) {
+            this.__requests.splice(i, 1);
         }
 
-        request.open(this.method, encodeURI(requestURL), !this.isSync);
-
-        var i = this.headers.length - 1;
-        while (i >= 0) {
-            request.setRequestHeader(this.headers[i].name, this.headers[i].value);
-
-            i--;
-        }
-
-        var sendData = null;
-        if (this.method === 'POST') {
-            request.setRequestHeader
-                ('Content-Type', 'application/x-www-form-urlencoded');
-
-            sendData = dataString;
-        }
-
-        request.send(sendData);
-
-        if (this.isSync) {
-            this.__response = request.responseText;
-
-            this.dispatch('complete', this.__response);
-        }
-
-        this.__request = request;
-    };
-
-    /**
-     * Прерывание запроса.
-     */
-    Request.prototype.abort = function() {
-        if (this.__request !== null) {
-            this.__request.abort();
-        }
-    };
-
-    /**
-     * Возвращение результата в виде строки.
-     *
-     * @return {String} Строка результата.
-     */
-    Request.prototype.getResponse = function() {
-        return this.__response;
-    };
-
-    /**
-     * Кодирование объекта в x-www-form-urlencoded форму.
-     *
-     * @param {Object} object Объект кодирования.
-     * @return {String} Перекодированный в строку объект.
-     */
-    Request.encode = function(object) {
-        return Request.__splitData(object).join('&');
-    };
-
-    /**
-     * Рекурсивное разбиение объекта н данные для кодирования в x-www-form-urlencoded.
-     *
-     * @param {Object} object Объект кодирования.
-     * @param {Object} path Путь к элементарной единице данных.
-     * @return {Array} Массив элементарных данных составляющих объект
-     * @private
-     */
-    Request.__splitData = function(object, path) {
-        var result = [];
-
-        if (path === undefined) {
-            path = [];
-        }
-
-        if (object !== undefined &&
-            object !== null &&
-            object.constructor !== Function) {
-
-            if (object.constructor === Object) {
-                for (var key in object) {
-                    var newPath = path.length === 0 ? [key] : (path.join(',') + ',' + key).split(',');
-                    result = result.concat(Request.__splitData(object[key], newPath));
-                }
-            } else {
-                result = [path.shift() + (path.length > 0 ? '[' + path.join('][') + ']=' : '=') + encodeURIComponent(object)];
-            }
-        }
-
-        return result;
-    };
-
-    tuna.net.Request = Request;
-
-})();
+        i++;
+    }
+};
