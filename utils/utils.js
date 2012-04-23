@@ -14,8 +14,15 @@ tuna.utils.toArray = function(list) {
  * @return {string}
  */
 tuna.utils.dateToString = function(date) {
-  return date.toJSON().substring(0, 16).replace('T', ' ');
+    return date.toJSON().substring(0, 16).replace('T', ' ');
 };
+
+
+/**
+ * @private
+ * @constructor
+ */
+tuna.utils.__ExtendLink = function() {};
 
 
 /**
@@ -28,14 +35,9 @@ tuna.utils.dateToString = function(date) {
  * @param {!Object} Parent Родительский класс.
  */
 tuna.utils.extend = function(Class, Parent) {
-    /**
-     * @private
-     * @constructor
-     */
-    var Link = function() {};
-    Link.prototype = Parent.prototype;
+    tuna.utils.__ExtendLink.prototype = Parent.prototype;
 
-    Class.prototype = new Link();
+    Class.prototype = new tuna.utils.__ExtendLink();
     Class.prototype.constructor = Class;
 };
 
@@ -50,7 +52,7 @@ tuna.utils.extend = function(Class, Parent) {
  */
 tuna.utils.eval = function(code) {
     return (window.execScript !== undefined) ?
-            window.execScript(code) : window.eval(code);
+        window.execScript(code) : window.eval(code);
 };
 
 /**
@@ -115,7 +117,7 @@ tuna.utils.isObjectsEquals = function(object1, object2) {
             if (object1[key] instanceof Object &&
                 object2[key] instanceof Object) {
                 result = result &&
-                         tuna.utils.isObjectsEquals(object1[key], object2[key]);
+                    tuna.utils.isObjectsEquals(object1[key], object2[key]);
             } else {
                 result = result && object1[key] === object2[key];
             }
@@ -157,7 +159,7 @@ tuna.utils.indexOf = function(element, array) {
  * @return {string} Перекодированный в строку объект.
  */
 tuna.utils.urlEncode = function(object) {
-  return tuna.utils.__splitUrlData(object).join('&');
+    return tuna.utils.__splitUrlData(object).join('&');
 };
 
 /**
@@ -169,29 +171,29 @@ tuna.utils.urlEncode = function(object) {
  * @return {Array} Массив элементарных данных составляющих объект
  */
 tuna.utils.__splitUrlData = function(object, path) {
-  var result = [];
+    var result = [];
 
-  if (path === undefined) {
-    path = [];
-  }
-
-  if (object !== null && !(object instanceof Function)) {
-    if (object instanceof Object) {
-      for (var key in object) {
-        var newPath = path.length === 0 ?
-          [key] : (path.join(',') + ',' + key).split(',');
-
-        result = result.concat(tuna.utils.__splitUrlData(object[key], newPath));
-      }
-    } else {
-      result = [
-        path.shift() + (path.length > 0 ? '[' + path.join('][') + ']=' : '=') +
-          encodeURIComponent('' + object)
-      ];
+    if (path === undefined) {
+        path = [];
     }
-  }
 
-  return result;
+    if (object !== null && !(object instanceof Function)) {
+        if (object instanceof Object) {
+            for (var key in object) {
+                var newPath = path.length === 0 ?
+                    [key] : (path.join(',') + ',' + key).split(',');
+
+                result = result.concat(tuna.utils.__splitUrlData(object[key], newPath));
+            }
+        } else {
+            result = [
+                path.shift() + (path.length > 0 ? '[' + path.join('][') + ']=' : '=') +
+                    encodeURIComponent('' + object)
+            ];
+        }
+    }
+
+    return result;
 };
 
 /**
@@ -206,91 +208,47 @@ tuna.utils.__DECODE_HELPER = '|';
  * @return {Object}
  */
 tuna.utils.urlDecode = function(search) {
-  var result = {};
+    var result = {};
 
-  var parsedSearch = search.split('][').join(tuna.utils.__DECODE_HELPER);
-  parsedSearch = parsedSearch.split('[').join(tuna.utils.__DECODE_HELPER);
-  parsedSearch = parsedSearch.split(']').join('');
+    var parsedSearch = search.split('][').join(tuna.utils.__DECODE_HELPER);
+    parsedSearch = parsedSearch.split('[').join(tuna.utils.__DECODE_HELPER);
+    parsedSearch = parsedSearch.split(']').join('');
 
-  var vars = parsedSearch.split('&');
-  var i = 0,
-    l = vars.length;
+    var vars = parsedSearch.split('&');
+    var i = 0,
+        l = vars.length;
 
-  var pair = null;
-  var path = null;
-  var pathToken = null;
+    var pair = null;
+    var path = null;
+    var pathToken = null;
 
-  var context = null;
-  while (i < l) {
-    pair = vars[i].split('=');
-    path = pair.shift().split(tuna.utils.__DECODE_HELPER);
+    var context = null;
+    while (i < l) {
+        pair = vars[i].split('=');
+        path = pair.shift().split(tuna.utils.__DECODE_HELPER);
 
-    context = result;
+        context = result;
 
-    while (path.length > 0) {
-      pathToken = path.shift();
+        while (path.length > 0) {
+            pathToken = path.shift();
 
-      if (path.length === 0) {
-        context[pathToken] = decodeURIComponent(pair.shift());
-      } else if (context[pathToken] === undefined) {
-        context[pathToken] = {};
-      }
+            if (path.length === 0) {
+                context[pathToken] = decodeURIComponent(pair.shift());
+            } else if (context[pathToken] === undefined) {
+                context[pathToken] = {};
+            }
 
-      context = context[pathToken];
-    }
-
-    i++;
-  }
-
-  return result;
-};
-
-/**
- * @constructor
- */
-var Config = function() {
-
-    /**
-     * @private
-     * @type {Object.<(string|number), *>}
-     */
-    this.__data = null;
-};
-
-/**
- * @param {Object} data
- */
-Config.prototype.init = function(data) {
-    this.__data = data;
-};
-
-/**
- * @param {string|number} key
- * @param {(string|number)=} subKey
- * @return {*}
- */
-Config.prototype.get = function(key, subKey) {
-    if (this.__data[key] !== undefined) {
-        if (subKey !== undefined) {
-            return this.__data[key][subKey] || null;
+            context = context[pathToken];
         }
 
-        return this.__data[key];
+        i++;
     }
 
-    return null;
+    return result;
 };
 
-/**
- * @param {string|number} key
- * @param {*} value
- */
-Config.prototype.set = function(key, value) {
-    this.__data[key] = value;
-};
 
 /**
- * @type Config
+ * @type tuna.utils.Config
  */
-tuna.utils.config = new Config();
-
+tuna.utils.config = new tuna.utils.Config();

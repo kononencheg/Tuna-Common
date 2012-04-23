@@ -138,7 +138,8 @@ tuna.net.Request.prototype.send = function(opt_data) {
     }
 
     var request = !tuna.IS_IE ? new XMLHttpRequest() :
-        new ActiveXObject('Microsoft.XMLHTTP');
+                                new ActiveXObject('Microsoft.XMLHTTP');
+
     if (!this.__isSync) {
         var self = this;
 
