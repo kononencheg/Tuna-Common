@@ -1,11 +1,11 @@
 /**
  * Convert array-like object to array.
  *
- * @param {Object|null|undefined} list Array-like object.
- * @return {Array} Converted array.
+ * @param {?Object} list Array-like object.
+ * @return {!Array} Converted array.
  */
 tuna.utils.toArray = function(list) {
-    return Array.prototype.slice.call(list);
+    return list === null ? [] : Array.prototype.slice.call(list);
 };
 
 
@@ -70,7 +70,7 @@ tuna.utils.bind = function(func, context) {
 
         return function() {
             return func.apply
-                (context, args.concat(tuna.utils.toArray(arguments)));
+                (context, tuna.utils.toArray(arguments));
         };
     }
 };

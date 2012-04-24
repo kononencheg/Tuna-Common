@@ -461,6 +461,23 @@ tuna.dom.getParentWithClass = function(element, className, opt_context) {
 
 
 /**
+ * Поиск элементов с указанным CSS-классом, в указанном контексте.
+ *
+ * @param {string} className Название CSS-класса.
+ * @param {!Node=} element DOM-элемент в котором необходимо провести поиск.
+ * @return {!Array.<!Node>} Массив  найденных элементов.
+ */
+tuna.dom.getElementsByClassName = function(className, element) {
+    element = element || document;
+    if (element.getElementsByClassName !== undefined) {
+        return tuna.utils.toArray(element.getElementsByClassName(className));
+    } else {
+        return tuna.dom.select('.' + className, element);
+    }
+};
+
+
+/**
  * Проверка наличия CSS-класса элемента.
  *
  * @param {!Node} element DOM-элемент наличие класса которого нужно проверить.

@@ -1,4 +1,6 @@
 
+
+
 /**
  * @constructor
  */
@@ -11,12 +13,14 @@ tuna.utils.Config = function() {
     this.__data = null;
 };
 
+
 /**
  * @param {Object} data
  */
 tuna.utils.Config.prototype.init = function(data) {
     this.__data = data;
 };
+
 
 /**
  * @param {...(string|number)} var_keys
@@ -46,6 +50,7 @@ tuna.utils.Config.prototype.get = function(var_keys) {
 
     return result;
 };
+
 
 /**
  * @param {string|number} key
