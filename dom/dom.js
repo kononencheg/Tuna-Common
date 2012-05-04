@@ -1,5 +1,6 @@
 
 
+
 /**
  * Установка движка поиска элементов с помощью CSS-селекторов.
  *
@@ -308,6 +309,7 @@ tuna.dom.removeChildEventListener = function(element, selector, type, handler) {
  * В качестве вспомогательного события, данный метод использует событие
  * <code>'onhelp'</code>.
  *
+ * @private
  * @see tuna.dom.__dispatchCustomIEEvent
  * @param {!Node} element DOM-елемент, событие которого нужно обрабатывать.
  * @param {string} type Тип обрабатываемого события.
@@ -341,6 +343,7 @@ tuna.dom.__addCustomIEListener = function(element, type, handler) {
 /**
  * Удаление нестандартного события в Internet Explorer.
  *
+ * @private
  * @see tuna.dom.__addCustomIEListener
  * @param {!Node} element DOM-елемент, слушатель события которого нужно удалить.
  * @param {string} type Тип удаляемого события.
@@ -367,6 +370,7 @@ tuna.dom.__removeCustomIEListener = function(element, type, handler) {
  * Также как и функция <code>tuna.dom.__addCustomIEListener()</code> использует
  * в качестве вспомогательного событие <code>'onhelp'/code>.
  *
+ * @private
  * @see tuna.dom.__addCustomIEListener
  * @param {!Node} element DOM-елемент, событие которого нужно обрабатывать.
  * @param {!Event} event Объект события стандартной событийной модели браузера.

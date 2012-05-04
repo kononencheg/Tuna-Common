@@ -87,7 +87,8 @@ tuna.utils.nextTick = function(callback) {
 /**
  * Клонирование объекта.
  *
- * @param {Object} object
+ * @param {*} object
+ * @return {*} Копия объекта.
  */
 tuna.utils.clone = function(object) {
     return JSON.parse(JSON.stringify(object));
@@ -97,6 +98,7 @@ tuna.utils.clone = function(object) {
  * Клонирование массива.
  *
  * @param {Array} array
+ * @return {Array} Копия массива.
  */
 tuna.utils.cloneArray = function(array) {
     return array.slice(0);
@@ -132,6 +134,7 @@ tuna.utils.isObjectsEquals = function(object1, object2) {
  *
  * @param {*} element
  * @param {Array} array
+ * @return {number}
  */
 tuna.utils.indexOf = function(element, array) {
     if (array.indexOf !== undefined) {

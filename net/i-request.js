@@ -4,11 +4,7 @@
 /**
  * Интерфейс классов отправки удаленных запросов.
  *
- * Данный интерфейс наследует <code>tuna.events.IEventDispatcher</code>. Классы
- * реализующие данный интерфейс должны генерировать следующие события:
- *
- * - <code>complete</code> - При получении ответа на запрос.
- *
+ * @event <code>complete</code> - При получении ответа на запрос.
  * @interface
  * @extends {tuna.events.IEventDispatcher}
  */

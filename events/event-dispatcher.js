@@ -28,7 +28,7 @@ tuna.events.EventDispatcher = function(opt_propagationParent) {
      * Таблица слушателей событий определенных типов.
      *
      * @protected
-     * @type {Object.<string, Array.<function(tuna.events.BasicEvent, *)>>}
+     * @type {!Object.<string, !Array.<function(tuna.events.BasicEvent, *)>>}
      */
     this._listeners = {};
 };
