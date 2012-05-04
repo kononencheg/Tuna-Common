@@ -1,21 +1,4 @@
-/**
- * Convert array-like object to array.
- *
- * @param {?Object} list Array-like object.
- * @return {!Array} Converted array.
- */
-tuna.utils.toArray = function(list) {
-    return list === null ? [] : Array.prototype.slice.call(list);
-};
 
-
-/**
- * @param {!Date} date
- * @return {string}
- */
-tuna.utils.dateToString = function(date) {
-    return date.toJSON().substring(0, 16).replace('T', ' ');
-};
 
 
 /**
@@ -41,6 +24,7 @@ tuna.utils.extend = function(Class, Parent) {
     Class.prototype.constructor = Class;
 };
 
+
 /**
  * Функция выполнения строки JavaScript кода в глобальной области имен.
  *
@@ -55,6 +39,7 @@ tuna.utils.eval = function(code) {
         window.execScript(code) : window.eval(code);
 };
 
+
 /**
  * Привязывание определенного контекста к функции или методу.
  *
@@ -66,8 +51,6 @@ tuna.utils.bind = function(func, context) {
     if (func.bind !== undefined) {
         return func.bind(context);
     } else {
-        var args = Array.prototype.slice.call(arguments, 2);
-
         return function() {
             return func.apply
                 (context, tuna.utils.toArray(arguments));
@@ -75,14 +58,27 @@ tuna.utils.bind = function(func, context) {
     }
 };
 
+
 /**
- * Отложенное выполнение метода. Д
+ * Отложенное выполнение метода.
  *
  * @param {!Function} callback
  */
 tuna.utils.nextTick = function(callback) {
     setTimeout(callback, 0);
 };
+
+
+/**
+ * Преобразование объекта с индесами в массив.
+ *
+ * @param {?Object} list Объект похожий на массив.
+ * @return {!Array} Массив.
+ */
+tuna.utils.toArray = function(list) {
+    return list === null ? [] : Array.prototype.slice.call(list);
+};
+
 
 /**
  * Клонирование объекта.
@@ -94,6 +90,7 @@ tuna.utils.clone = function(object) {
     return JSON.parse(JSON.stringify(object));
 };
 
+
 /**
  * Клонирование массива.
  *
@@ -104,30 +101,17 @@ tuna.utils.cloneArray = function(array) {
     return array.slice(0);
 };
 
+
 /**
  * @param {Object} object1
  * @param {Object} object2
  * @return {boolean}
  */
 tuna.utils.isObjectsEquals = function(object1, object2) {
-    var result = object1 === object2;
-
-    if (!result && object1 !== null && object2 !== null) {
-        result = true;
-
-        for (var key in object1) {
-            if (object1[key] instanceof Object &&
-                object2[key] instanceof Object) {
-                result = result &&
-                    tuna.utils.isObjectsEquals(object1[key], object2[key]);
-            } else {
-                result = result && object1[key] === object2[key];
-            }
-        }
-    }
-
-    return result;
+    return object1 === object2 ||
+           JSON.stringify(object1) === JSON.stringify(object2);
 };
+
 
 /**
  * Поиск индекса объекта в массиве.
@@ -155,6 +139,7 @@ tuna.utils.indexOf = function(element, array) {
     return -1;
 };
 
+
 /**
  * Кодирование объекта в x-www-form-urlencoded форму.
  *
@@ -164,6 +149,7 @@ tuna.utils.indexOf = function(element, array) {
 tuna.utils.urlEncode = function(object) {
     return tuna.utils.__splitUrlData(object).join('&');
 };
+
 
 /**
  * Рекурсивное разбиение объекта н данные для кодирования в x-www-form-urlencoded.
@@ -199,12 +185,14 @@ tuna.utils.__splitUrlData = function(object, path) {
     return result;
 };
 
+
 /**
  * @private
  * @const
  * @type {string}
  */
 tuna.utils.__DECODE_HELPER = '|';
+
 
 /**
  * @param {string} search
@@ -252,6 +240,6 @@ tuna.utils.urlDecode = function(search) {
 
 
 /**
- * @type tuna.utils.Config
+ * @type {!tuna.utils.Config}
  */
 tuna.utils.config = new tuna.utils.Config();
