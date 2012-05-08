@@ -94,8 +94,8 @@ tuna.utils.clone = function(object) {
 /**
  * Клонирование массива.
  *
- * @param {Array} array
- * @return {Array} Копия массива.
+ * @param {!Array} array
+ * @return {!Array} Копия массива.
  */
 tuna.utils.cloneArray = function(array) {
     return array.slice(0);
