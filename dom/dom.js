@@ -141,7 +141,7 @@ tuna.dom.dispatchEvent = function(element, type) {
  * которого произошло.
  *
  * @see tuna.dom.dispatchEvent
- * @param {!Node} element DOM-элемент, событие которого нужно обрабатывать.
+ * @param {!Node|!Window} element DOM-элемент, событие которого нужно обрабатывать.
  * @param {string} type Тип обрабатываемого события.
  * @param {!function(Event)} handler Функция-обработчик события.
  */
@@ -311,7 +311,7 @@ tuna.dom.removeChildEventListener = function(element, selector, type, handler) {
  *
  * @private
  * @see tuna.dom.__dispatchCustomIEEvent
- * @param {!Node} element DOM-елемент, событие которого нужно обрабатывать.
+ * @param {!Node|!Window} element DOM-елемент, событие которого нужно обрабатывать.
  * @param {string} type Тип обрабатываемого события.
  * @param {!function(Event)} handler Функция-обработчик события.
  */
