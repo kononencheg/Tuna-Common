@@ -220,7 +220,7 @@ tuna.utils.urlDecode = function(search) {
 
         context = result;
 
-        while (path.length > 0) {
+        while (pair.length > 0) {
             pathToken = path.shift();
 
             if (path.length === 0) {

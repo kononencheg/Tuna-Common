@@ -106,7 +106,8 @@ tuna.dom.__selectorEngine = null;
  *
  * @see tuna.dom.addEventListener
  * @see tuna.dom.removeEventListener
- * @param {!Node} element DOM-элемент о событии которого необходимо оповестить.
+ * @param {!Node|!Window} element DOM-элемент о событии которого необходимо
+ *        оповестить.
  * @param {string} type Тип события.
  * @return {boolean} Успех результата оповещения.
  */
@@ -171,7 +172,7 @@ tuna.dom.addEventListener = function(element, type, handler) {
 /**
  * Удаление обработчика события DOM-элемента.
  *
- * @param {!Node} element DOM-элемент, обработчик события которого нужно
+ * @param {!Node|!Window} element DOM-элемент, обработчик события которого нужно
  *        удалить.
  * @param {string} type Тип обрабатываемого события.
  * @param {!function(Event)} handler Функция-обработчик события.
@@ -252,17 +253,34 @@ tuna.dom.removeOneEventListener = function(element, type, handler) {
  * @see tuna.dom.getParentMatches
  * @param {!Node} element DOM-элемент, событие дочерних элементов которого
  *        нужно обрабатывать.
- * @param {string} selector CSS-селектор дочерних элементов.
+ * @param {?string} selector CSS-селектор дочерних элементов.
  * @param {string} type Тип обрабатываемого события.
  * @param {!function(Event)} handler Функция-обработчик события.
  */
 tuna.dom.addChildEventListener = function(element, selector, type, handler) {
-    if (element.__childTargetId === undefined) {
-        element.__childTargetId = 'element_' + tuna.dom.__lastElementId++;
-    }
+    if(selector !== null) {
+        if (element.__childTargetId === undefined) {
+            element.__childTargetId = 'element_' + tuna.dom.__lastElementId++;
+        }
 
-    var listenerId = element.__childTargetId + '_' + type + '_' + selector;
-    handler[listenerId] = function(event) {
+        var listenerId = element.__childTargetId + '_' + type + '_' + selector;
+        handler[listenerId] =
+            tuna.dom.__createChildListener(element, selector, handler);
+
+        tuna.dom.addEventListener(element, type, handler[listenerId]);
+    }
+};
+
+
+/**
+ * @param {!Node} element
+ * @param {string} selector
+ * @param {!function(Event)} handler
+ * @return {!function(Event)}
+ * @private
+ */
+tuna.dom.__createChildListener = function(element, selector, handler) {
+    return function(event) {
         var target = event.target || event.srcElement;
 
         var child = null;
@@ -278,8 +296,6 @@ tuna.dom.addChildEventListener = function(element, selector, type, handler) {
             tuna.dom.stopPropagation(event);
         }
     };
-
-    tuna.dom.addEventListener(element, type, handler[listenerId]);
 };
 
 
@@ -289,16 +305,19 @@ tuna.dom.addChildEventListener = function(element, selector, type, handler) {
  * @see tuna.dom.addChildEventListener
  * @param {!Node} element DOM-элемент, обработчик события дочерних элементов
  *        которого нужно удалить.
- * @param {string} selector CSS-селектор дочерних элементов.
+ * @param {?string} selector CSS-селектор дочерних элементов.
  * @param {string} type Тип обрабатываемого события.
  * @param {!function(Event)} handler Функция-обработчик события.
  */
 tuna.dom.removeChildEventListener = function(element, selector, type, handler) {
-    var listenerId = element.__childTargetId + '_' + type + '_' + selector;
-    if (handler[listenerId] !== undefined) {
-        tuna.dom.removeEventListener(element, type, handler[listenerId]);
+    if(selector !== null) {
+        var listenerId = element.__childTargetId + '_' + type + '_' + selector;
 
-        delete handler[listenerId];
+        if (handler[listenerId] !== undefined) {
+            tuna.dom.removeEventListener(element, type, handler[listenerId]);
+
+            delete handler[listenerId];
+        }
     }
 };
 
@@ -345,7 +364,7 @@ tuna.dom.__addCustomIEListener = function(element, type, handler) {
  *
  * @private
  * @see tuna.dom.__addCustomIEListener
- * @param {!Node} element DOM-елемент, слушатель события которого нужно удалить.
+ * @param {!Node|!Window} element DOM-елемент, слушатель события которого нужно удалить.
  * @param {string} type Тип удаляемого события.
  * @param {!function(Event)} handler Удаляемая функция-обработчик события.
  */
@@ -372,7 +391,7 @@ tuna.dom.__removeCustomIEListener = function(element, type, handler) {
  *
  * @private
  * @see tuna.dom.__addCustomIEListener
- * @param {!Node} element DOM-елемент, событие которого нужно обрабатывать.
+ * @param {!Node|!Window} element DOM-елемент, событие которого нужно обрабатывать.
  * @param {!Event} event Объект события стандартной событийной модели браузера.
  * @param {string} type Тип не стандартного события.
  * @return {boolean} Успех оповещения о событии.
@@ -393,13 +412,15 @@ tuna.dom.__lastElementId = 0;
 /**
  * Кросс-браузерная обертка остановки дествия события по-умолчанию.
  *
- * @param {!Event} event Объект DOM-события.
+ * @param {Event} event Объект DOM-события.
  */
 tuna.dom.preventDefault = function(event) {
-    if (event.preventDefault !== undefined) {
-        event.preventDefault();
-    } else {
-        event.returnValue = false;
+    if (event !== null) {
+        if (event.preventDefault !== undefined) {
+            event.preventDefault();
+        } else {
+            event.returnValue = false;
+        }
     }
 };
 
@@ -407,13 +428,15 @@ tuna.dom.preventDefault = function(event) {
 /**
  * Кросс-браузерная обертка остановки распространения события.
  *
- * @param {!Event} event Объект DOM-события.
+ * @param {Event} event Объект DOM-события.
  */
 tuna.dom.stopPropagation = function(event) {
-    if (event.stopPropagation !== undefined) {
-        event.stopPropagation();
-    } else {
-        event.cancelBubble = true;
+    if (event !== null) {
+        if (event.stopPropagation !== undefined) {
+            event.stopPropagation();
+        } else {
+            event.cancelBubble = true;
+        }
     }
 };
 
@@ -555,7 +578,7 @@ tuna.dom.setClassExist = function(element, className, isExist) {
  * <code>data-</code>.
  *
  * Результатом извлечения является хеш-таблица в которой ключами являются имена
- * аттрибутов без префикса <code>data-</code>.
+ * аттрибутов без указанного префикса (Поу молчанию <code>data-</code>).
  *
  * Например, для элемента
  * <code>
@@ -567,12 +590,13 @@ tuna.dom.setClassExist = function(element, className, isExist) {
  * </code>
  *
  * @param {!Node} element DOM-элемент, данные которого необходимо извлечь.
+ * @param {string=} opt_prefix Префикс аттрибутов.
  * @return {!Object.<string, string>} Таблица данных элемента.
  */
-tuna.dom.getAttributesData = function(element) {
+tuna.dom.getAttributesData = function(element, opt_prefix) {
     var result = {};
 
-    var prefix = 'data-';
+    var prefix = opt_prefix || 'data-';
 
     var attrs = element.attributes;
     var i = 0,
