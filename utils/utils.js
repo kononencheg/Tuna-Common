@@ -26,21 +26,6 @@ tuna.utils.extend = function(Class, Parent) {
 
 
 /**
- * Функция выполнения строки JavaScript кода в глобальной области имен.
- *
- * Не следует использовать нигде в логике приложенния.
- *
- * @param {string} code Строка кода.
- * @return {*} Результат выполнения.
- * @deprecated
- */
-tuna.utils.eval = function(code) {
-    return (window.execScript !== undefined) ?
-        window.execScript(code) : window.eval(code);
-};
-
-
-/**
  * Привязывание определенного контекста к функции или методу.
  *
  * @param {!function()} func
@@ -62,21 +47,10 @@ tuna.utils.bind = function(func, context) {
 /**
  * Отложенное выполнение метода.
  *
- * @param {!Function} callback
+ * @param {function()} callback
  */
 tuna.utils.nextTick = function(callback) {
     setTimeout(callback, 0);
-};
-
-
-/**
- * Преобразование объекта с индесами в массив.
- *
- * @param {?Object} list Объект похожий на массив.
- * @return {!Array} Массив.
- */
-tuna.utils.toArray = function(list) {
-    return list === null ? [] : Array.prototype.slice.call(list);
 };
 
 
@@ -92,6 +66,37 @@ tuna.utils.clone = function(object) {
 
 
 /**
+ * @param {!Object} base
+ * @param {Object} target
+ */
+tuna.utils.merge = function(base, target) {
+    for (var key in target) {
+        base[key] = target[key];
+    }
+};
+
+
+/**
+ * @param {Object} first
+ * @param {Object} second
+ * @return {boolean}
+ */
+tuna.utils.isObjectsEquals = function(first, second) {
+    return first === second || JSON.stringify(first) === JSON.stringify(second);
+};
+
+/**
+ * Преобразование объекта с индесами в массив.
+ *
+ * @param {Object} list Объект похожий на массив.
+ * @return {!Array} Массив.
+ */
+tuna.utils.toArray = function(list) {
+    return list === null ? [] : Array.prototype.slice.call(list);
+};
+
+
+/**
  * Клонирование массива.
  *
  * @param {!Array} array
@@ -99,17 +104,6 @@ tuna.utils.clone = function(object) {
  */
 tuna.utils.cloneArray = function(array) {
     return array.slice(0);
-};
-
-
-/**
- * @param {Object} object1
- * @param {Object} object2
- * @return {boolean}
- */
-tuna.utils.isObjectsEquals = function(object1, object2) {
-    return object1 === object2 ||
-           JSON.stringify(object1) === JSON.stringify(object2);
 };
 
 
@@ -187,59 +181,46 @@ tuna.utils.__splitUrlData = function(object, path) {
 
 
 /**
- * @private
- * @const
- * @type {string}
- */
-tuna.utils.__DECODE_HELPER = '|';
-
-
-/**
  * @param {string} search
- * @return {Object}
+ * @return {!Object}
  */
 tuna.utils.urlDecode = function(search) {
-    var result = {};
+    var result = new tuna.utils.SafeObject({});
 
-    var parsedSearch = search.split('][').join(tuna.utils.__DECODE_HELPER);
-    parsedSearch = parsedSearch.split('[').join(tuna.utils.__DECODE_HELPER);
-    parsedSearch = parsedSearch.split(']').join('');
-
-    var vars = parsedSearch.split('&');
+    var values = search.split('&');
     var i = 0,
-        l = vars.length;
+        l = values.length;
 
     var pair = null;
     var path = null;
-    var pathToken = null;
-
-    var context = null;
+    var value = null;
     while (i < l) {
-        pair = vars[i].split('=');
-        path = pair.shift().split(tuna.utils.__DECODE_HELPER);
+        pair = values[i].split('=');
+        path = decodeURIComponent(pair.shift());
+        value = pair.shift();
 
-        context = result;
-
-        while (pair.length > 0) {
-            pathToken = path.shift();
-
-            if (path.length === 0) {
-                context[pathToken] = decodeURIComponent(pair.shift());
-            } else if (context[pathToken] === undefined) {
-                context[pathToken] = {};
-            }
-
-            context = context[pathToken];
+        if (value !== undefined) {
+            result.setByPath
+                (decodeURIComponent(value), tuna.utils.parseUrlToken(path));
         }
 
         i++;
     }
 
-    return result;
+    return result.getCore();
 };
 
 
 /**
- * @type {!tuna.utils.Config}
+ * @param {string} path
+ * @return {!Array.<string>}
  */
-tuna.utils.config = new tuna.utils.Config();
+tuna.utils.parseUrlToken = function(path) {
+    var nameLength = path.indexOf('[');
+    if (nameLength === -1) {
+        return [path];
+    }
+
+    return [path.substring(0, nameLength)].concat
+                (path.substring(nameLength + 1, path.length - 1).split(']['));
+};
